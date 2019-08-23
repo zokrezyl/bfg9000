@@ -4,8 +4,9 @@ from itertools import chain
 from .arguments.parser import ArgumentParser
 from .builtins import builtin, init as builtin_init
 from .build_inputs import BuildInputs
-from .path import exists, Path, pushd, Root
 from .iterutils import listify
+from .path import exists, Path, pushd, Root
+from .shell import Mode
 from .tools import init as tools_init
 
 bfgfile = 'build.bfg'
@@ -75,6 +76,24 @@ def _execute_options(env, parent=None, usage='parse'):
         if e.errno != errno.ENOENT:
             raise
         return parser, []
+
+
+def install_dependencies(env):
+    conan = Path('conanfile.txt', Root.srcdir)
+    if exists(conan, env.base_dirs):
+        arch = None
+        if env.target_platform.family == 'windows':
+            # Forward the architecture on to conan.
+            if env.getvar('PLATFORM', 'Win32') in ('Win32', 'x86'):
+                arch = 'x86'
+        env.tool('conan').run('pkg_config', env.srcdir.string(),
+                              env.builddir.string(), arch=arch,
+                              stdout=Mode.normal)
+
+        path = env.getvar('PKG_CONFIG_PATH', '')
+        env.variables['PKG_CONFIG_PATH'] = (
+            env.builddir.append(path).string()
+        )
 
 
 def fill_user_help(env, parent):

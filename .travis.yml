@@ -10,7 +10,8 @@ env:
   global:
     - PYTHON=python3
     - PIP=pip3
-    - CPPFLAGS="-Wall -Werror"
+    # Not just `CPPFLAGS` so we don't apply this during `pip install`.
+    - CPPFLAGS_="-Wall -Werror"
     - BFG_EXTRA_TESTS="gcj mingw-cross"
   matrix:
     - CC=gcc CXX=g++
@@ -116,6 +117,7 @@ before_install:
 install:
   - ${PIP} install codecov .[test]
 script:
+  - export CPPFLAGS=$CPPFLAGS_
   - ${PYTHON} setup.py coverage -q
 after_success:
   - codecov

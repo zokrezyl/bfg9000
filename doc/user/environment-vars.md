@@ -342,6 +342,12 @@ Default: *none*
 A list of additional directories to search for Java class files. On POSIX
 systems, this is delimited by `:`; on Windows, by `;`.
 
+#### *CONAN*
+Default: `conan`
+{: .subtitle}
+
+The program to use for installing [conan][conan] package dependencies.
+
 #### *CPATH*
 Default: *none*
 {: .subtitle}
@@ -495,5 +501,6 @@ Default: `14.0`
 *Windows-only*. The version of Visual Studio to target when generating MSBuild
 files.
 
+[conan]: https://conan.io/
 [doppel]: https://github.com/jimporter/doppel
 [destdir]: https://www.gnu.org/prep/standards/html_node/DESTDIR.html

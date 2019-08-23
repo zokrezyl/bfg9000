@@ -1,0 +1,11 @@
+# -*- python -*-
+
+# When there's a `conanfile.txt` in your source directory, `package()` can be
+# used to resolve packages from conan.
+
+zlib = package('zlib')
+
+# Packages can be passed to the build functions, which will link the object
+# with the package and add the appropriate include directories:
+
+executable('program', files=['program.cpp'], packages=[zlib])

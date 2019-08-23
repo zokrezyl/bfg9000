@@ -152,6 +152,8 @@ def add_configure_args(parser):
                        help='build shared libraries (default: enabled)')
     build.add_argument('--static', action='enable', default=False,
                        help='build static libraries (default: disabled)')
+    build.add_argument('--no-install-dependencies', action='store_true',
+                       help='skip installation of dependencies')
 
     common_path_help = 'installation path for {} (default: {{}})'
     path_help = {
@@ -192,6 +194,9 @@ def configure(parser, subparser, args, extra):
             build.load_toolchain(env, args.toolchain)
         finalize_environment(env, args, extra)
         env.save(args.builddir.string())
+
+        if not args.no_install_dependencies:
+            build.install_dependencies(env)
 
         build_inputs = build.configure_build(env)
         backend.write(env, build_inputs)

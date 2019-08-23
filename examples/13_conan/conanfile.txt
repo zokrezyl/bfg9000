@@ -1,0 +1,8 @@
+[requires]
+zlib/1.2.11@conan/stable
+
+[options]
+zlib:shared=True
+
+[imports]
+bin, *.dll -> .

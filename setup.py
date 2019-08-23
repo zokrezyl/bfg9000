@@ -167,9 +167,9 @@ setup(
         ['colorama', 'packaging >= 17.0', 'setuptools'] + more_requires
     ),
     extras_require={
-        'dev': ['coverage', 'flake8 >= 3.0', 'lxml', 'mike >= 0.3.1',
+        'dev': ['conan', 'coverage', 'flake8 >= 3.0', 'lxml', 'mike >= 0.3.1',
                 'mkdocs-bootswatch', 'pypandoc', 'stdeb'],
-        'test': ['coverage', 'flake8 >= 3.0', 'lxml'],
+        'test': ['conan', 'coverage', 'flake8 >= 3.0', 'lxml'],
         'msbuild': ['lxml'],
     },
 
