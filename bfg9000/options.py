@@ -166,8 +166,13 @@ class OptionEnum(enum.Enum):
         return repr(self.name)
 
 
-def option(name, fields=[]):
-    return type(name, (Option,), {'_fields': fields})
+def option(name, fields=[], base=None):
+    if base:
+        base_fields = list(zip(base.__slots__, base._types))
+        fields = base_fields + fields
+    else:
+        base = Option
+    return type(name, (base,), {'_fields': fields})
 
 
 def variadic_option(name, type=None):
@@ -200,6 +205,8 @@ lib_dir = option('lib_dir', [('directory', Directory)])
 lib_literal = option('lib_literal', [('value', safe_str.stringy_types)])
 module_def = option('module_def', [('value', ModuleDefFile)])
 rpath_dir = option('rpath_dir', [('path', path.BasePath)])
+rpath_dual_dir = option('rpath_dual_dir', [('install_path', path.BasePath)],
+                        base=rpath_dir)
 rpath_link_dir = option('rpath_link_dir', [('path', path.BasePath)])
 
 # General options

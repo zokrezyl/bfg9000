@@ -8,6 +8,7 @@ from ..backends.ninja import writer as ninja
 from ..build_inputs import build_input
 from ..file_types import Directory, File, file_install_path, installify
 from ..iterutils import flatten, iterate, iterate_each, map_iterable, unlistify
+from ..packages import Package
 
 
 @build_input('install')
@@ -15,8 +16,13 @@ class InstallOutputs:
     def __init__(self, build_inputs, env):
         self.explicit = []
         self.implicit = []
+        self.packages = []
 
     def add(self, item):
+        if isinstance(item, Package):
+            self.packages.append(item)
+            return
+
         if item not in self.explicit:
             self.explicit.append(item)
 
@@ -103,6 +109,7 @@ def _install_commands(install_outputs, doppel):
         dst = file_install_path(output)
         return cmd('onto', src, dst)
 
+    print('install packages', install_outputs.packages)
     return ([install_line(i) for i in install_outputs] +
             [i.post_install for i in install_outputs if i.post_install])
 

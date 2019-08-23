@@ -459,18 +459,29 @@ class CcLinker(BuildCommand):
         return [], []
 
     def _installed_rpaths(self, options, output):
+        print('_installed_rpaths')
+
         result = []
         changed = False
         for i in options:
             if isinstance(i, opts.lib):
                 lib = i.library
                 if isinstance(lib, Library) and lib.runtime_file:
+                    print('  1)', repr(file_install_path(
+                        lib, cross=self.env
+                    ).parent()))
                     local = self._local_rpath(lib, output)[0][0]
                     installed = file_install_path(lib, cross=self.env).parent()
                     result.append(installed)
                     if not isinstance(local, BasePath) or local != installed:
                         changed = True
+            elif isinstance(i, opts.rpath_dual_dir):
+                print('  4)', repr(i.path), repr(i.install_path))
+                result.append(i.install_path)
+                if i.path != i.install_path:
+                    changed = True
             elif isinstance(i, opts.rpath_dir):
+                print('  3)', repr(i.path))
                 result.append(i.path)
 
         return uniques(result) if changed else []

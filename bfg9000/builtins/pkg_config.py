@@ -284,7 +284,7 @@ class PkgConfigInfo:
         # Get the package dependencies for all the libs (public and private)
         # that were passed in.
         auto_requires, auto_extra = self._filter_packages(chain.from_iterable(
-            recursive_walk(i, 'package_deps', 'install_deps')
+            recursive_walk(i, 'package_deps', 'install_deps') #FIXME
             for i in chain(libs, libs_private)
         ))
 

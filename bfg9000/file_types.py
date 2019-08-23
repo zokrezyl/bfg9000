@@ -208,7 +208,7 @@ class LinkedBinary(Binary):
 
     @property
     def install_deps(self):
-        return self.runtime_deps + self.linktime_deps
+        return self.runtime_deps + self.linktime_deps + self.package_deps
 
 
 class Executable(LinkedBinary):
