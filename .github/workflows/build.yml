@@ -24,6 +24,10 @@ jobs:
     - name: Install dependencies (apt)
       run: |
         sudo apt-get install bison default-jdk flex freeglut3-dev gcc-multilib gfortran gobjc gobjc++ libboost-dev libboost-program-options-dev libgl1-mesa-dev libogg-dev mingw-w64 ninja-build qt5-default qtdeclarative5-dev scala
+    - name: Show paths
+      run: |
+        find /usr/lib -name libboost_program_options.so
+        cc -print-search-dirs
     - name: Run tests
       run: |
         python setup.py coverage -q
