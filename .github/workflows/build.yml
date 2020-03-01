@@ -1,0 +1,47 @@
+name: build
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.5, 3.6, 3.7]
+      fail-fast: false
+    env:
+      CPPFLAGS: -Wall -Werror
+      BFG_EXTRA_TESTS: mingw-cross
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies (python)
+      run: |
+        pip install codecov '.[test]'
+    - name: Install dependencies (apt)
+      run: |
+        sudo apt-get install bison default-jdk flex freeglut3-dev gcc-multilib gfortran gobjc gobjc++ libboost-dev libboost-program-options-dev libgl1-mesa-dev libogg-dev mingw-w64 ninja-build qt5-default qtdeclarative5-dev scala
+    - name: Run tests
+      run: |
+        python setup.py coverage -q
+    - name: Upload coverage
+      run: |
+        codecov
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        pip install '.[test]'
+    - name: Run lint
+      run: |
+        python setup.py lint
