@@ -318,7 +318,7 @@ class JvmPackageResolver:
         raise PackageResolutionError("unable to find library '{}'"
                                      .format(name))
 
-    def resolve(self, name, version, kind, headers, libs):
+    def resolve(self, name, submodules, version, kind):
         lib = self._library(name)
         log.info('found package {!r} via path-search in {!r}'
                  .format(name, lib.path.parent().string()))

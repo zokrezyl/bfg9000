@@ -2,15 +2,14 @@ import os.path
 import re
 from itertools import chain
 
-from . import pkg_config
+from . import mopack, pkg_config
 from .common import BuildCommand, Builder, check_which, library_macro
 from .. import log, options as opts, safe_str, shell
 from ..arguments.windows import ArgumentParser
 from ..builtins.file_types import make_immediate_file
 from ..exceptions import PackageResolutionError
 from ..file_types import *
-from ..iterutils import (default_sentinel, iterate, listify, merge_into_dict,
-                         uniques)
+from ..iterutils import iterate, listify, merge_into_dict, uniques
 from ..languages import known_langs, known_formats
 from ..objutils import memoize
 from ..packages import CommonPackage, Framework, PackageKind
@@ -546,7 +545,7 @@ class MsvcPackageResolver:
         return self.builder.lang
 
     def header(self, name, search_dirs=None):
-        if search_dirs is None:
+        if not search_dirs:
             search_dirs = self.include_dirs
 
         for base in search_dirs:
@@ -558,7 +557,7 @@ class MsvcPackageResolver:
         raise PackageResolutionError("unable to find header '{}'".format(name))
 
     def library(self, name, kind=PackageKind.any, search_dirs=None):
-        if search_dirs is None:
+        if not search_dirs:
             search_dirs = self.lib_dirs
         libname = name + '.lib'
 
@@ -574,24 +573,77 @@ class MsvcPackageResolver:
         raise PackageResolutionError("unable to find library '{}'"
                                      .format(name))
 
-    def resolve(self, name, version, kind, headers, lib_names):
+    def _resolve_path(self, name, submodules, format, kind, *, version=None,
+                      get_version=None, can_auto_link=False, usage={}):
+        headers = usage.get('headers', [])
+        libraries = mopack.to_frameworks(usage.get('libraries', []))
+        include_path = [abspath(i) for i in usage.get('include_path', [])]
+        library_path = [abspath(i) for i in usage.get('library_path', [])]
+
+        compile_options = opts.option_list()
+
+        if headers:
+            compile_options.extend(opts.include_dir(
+                self.header(i, include_path)
+            ) for i in headers)
+        elif include_path:
+            compile_options.extend(opts.include_dir(
+                HeaderDirectory(i, None, system=True)
+            ) for i in include_path)
+
+        if can_auto_link:
+            link_options = opts.option_list(opts.lib_dir(Directory(i))
+                                            for i in library_path)
+            found_lib_path = library_path[0] if library_path else None
+        else:
+            link_options = opts.option_list(opts.lib(
+                self.library(i, kind, library_path)
+            ) for i in libraries)
+            found_lib_path = (link_options[0].library.path.parent().string()
+                              if link_options else None)
+
+        found_ver = None
+        if get_version:
+            header_dirs = [i.directory for i in compile_options
+                           if isinstance(i, opts.include_dir)]
+            found_ver = get_version(header_dirs, version)
+
+        version_note = ' version {}'.format(found_ver) if found_ver else ''
+        path_note = ' in {!r}'.format(found_lib_path) if found_lib_path else ''
+        log.info('found package {!r}{} via path-search{}'
+                 .format(name, version_note, path_note))
+        return CommonPackage(
+            name, submodules, format=format, version=found_ver,
+            compile_options=compile_options, link_options=link_options
+        )
+
+    def resolve(self, name, submodules, version, kind, *, get_version=None,
+                can_auto_link=False):
         format = self.builder.object_format
-        try:
-            return pkg_config.resolve(self.env, name, format, version, kind)
-        except (OSError, PackageResolutionError):
-            if lib_names is default_sentinel:
-                lib_names = self.env.target_platform.transform_package(name)
+        usage = mopack.try_usage(self.env, name, submodules)
 
-            compile_options = opts.option_list(
-                opts.include_dir(self.header(i)) for i in iterate(headers)
+        if usage['type'] == 'pkg-config':
+            if len(usage['pcfiles']) != 1:
+                raise PackageResolutionError('only one pkg-config file ' +
+                                             'currently supported')
+            return pkg_config.resolve(self.env, usage['pcfiles'][0], format,
+                                      version, kind, usage['path'])
+        elif usage['type'] == 'path':
+            return self._resolve_path(
+                name, submodules, format, kind, version=version,
+                get_version=get_version, can_auto_link=can_auto_link,
+                usage=usage
             )
-            link_options = opts.option_list(
-                opts.lib(self.library(i, kind)) for i in iterate(lib_names)
-            )
-
-            path_note = ' in {!r}'.format(
-                link_options[0].library.path.parent().string()
-            ) if link_options else ''
-            log.info('found package {!r} via path-search{}'
-                     .format(name, path_note))
-            return CommonPackage(name, format, compile_options, link_options)
+        elif usage['type'] == 'system':
+            try:
+                return pkg_config.resolve(self.env, name, format, version,
+                                          kind)
+            except (OSError, PackageResolutionError):
+                return self._resolve_path(
+                    name, submodules, format, kind, version=version,
+                    get_version=get_version, can_auto_link=can_auto_link,
+                    usage=usage
+                )
+        else:
+            raise PackageResolutionError('unsupported package usage {!r}'
+                                         .format(usage['type']))

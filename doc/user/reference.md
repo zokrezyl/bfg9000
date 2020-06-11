@@ -847,7 +847,7 @@ All of the arguments below are optional and will be automatically inferred from
 the rest of the build where possible. Unless otherwise noted, these arguments
 correspond directly to the fields in the pkg-config `.pc` file.
 
-* *name*: The name of the package (to be used at the name of the `.pc` file)
+* *name*: The name of the package (to be used as the name of the `.pc` file)
 * *desc_name*: A human-readable name for the package (stored as the `Name`
   field in pkg-config); defaults to *name*
 * *desc*: A brief description of the package; defaults to `<name> library`

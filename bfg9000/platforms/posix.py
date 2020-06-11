@@ -1,6 +1,5 @@
 from .basepath import BasePath, Root, InstallRoot
 from .core import Platform
-from .framework import Framework
 from .host import HostPlatform
 from .target import TargetPlatform
 
@@ -53,12 +52,6 @@ class PosixHostPlatform(HostPlatform, PosixPlatform):
 
 
 class PosixTargetPlatform(TargetPlatform, PosixPlatform):
-    _package_map = {
-        'gl': 'GL',
-        'glu': 'GLU',
-        'zlib': 'z',
-    }
-
     @property
     def object_format(self):
         return 'elf'
@@ -95,12 +88,6 @@ class PosixTargetPlatform(TargetPlatform, PosixPlatform):
 
 
 class DarwinTargetPlatform(PosixTargetPlatform):
-    _package_map = {
-        'gl': Framework('OpenGL'),
-        'glu': Framework('OpenGL'),
-        'glut': Framework('GLUT'),
-    }
-
     @property
     def object_format(self):
         return 'mach-o'

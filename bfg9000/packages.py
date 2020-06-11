@@ -4,8 +4,6 @@ except ImportError:
     from enum import EnumMeta as _EnumMeta, IntEnum as _Flag
 
 from .iterutils import listify as _listify
-from .options import option_list as _option_list
-from .platforms.framework import Framework  # noqa
 
 
 class _PackageKindMeta(_EnumMeta):
@@ -50,13 +48,42 @@ class Package:
 
 
 class CommonPackage(Package):
-    def __init__(self, name, format, compile_options=None, link_options=None):
+    def __init__(self, name, submodules=None, *, format, version=None,
+                 compile_options=None, link_options=None):
+        # Import this here to avoid circular import.
+        from .options import option_list
+
+        submodules = _listify(submodules)
+        if submodules:
+            name = '{}({})'.format(name, ','.join(submodules))
+
         super().__init__(name, format)
-        self._compile_options = compile_options or _option_list()
-        self._link_options = link_options or _option_list()
+        self.version = version
+        self._compile_options = compile_options or option_list()
+        self._link_options = link_options or option_list()
 
     def compile_options(self, compiler):
         return self._compile_options
 
     def link_options(self, linker):
         return self._link_options
+
+
+class Framework:
+    # A reference to a macOS framework. Can be used in place of Library objects
+    # within a Package.
+
+    def __init__(self, name, suffix=None):
+        self.name = name
+        self.suffix = suffix
+
+    @property
+    def full_name(self):
+        return self.name + ',' + self.suffix if self.suffix else self.name
+
+    def __eq__(self, rhs):
+        return (type(self) == type(rhs) and self.name == rhs.name and
+                self.suffix == rhs.suffix)
+
+    def __ne__(self, rhs):
+        return not (self == rhs)

@@ -9,7 +9,7 @@ except ImportError:
 from . import path, safe_str
 from .iterutils import isiterable
 from .file_types import *
-from .platforms.framework import Framework
+from .packages import Framework
 
 
 class option_list:
@@ -25,6 +25,9 @@ class option_list:
     def extend(self, options):
         for i in options:
             self.append(i)
+
+    def insert(self, i, option):
+        self._options.insert(i, option)
 
     def collect(self, *args):
         for i in args:

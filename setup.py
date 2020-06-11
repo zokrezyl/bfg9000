@@ -164,7 +164,8 @@ setup(
     packages=find_packages(exclude=['test', 'test.*']),
 
     install_requires=(
-        ['colorama', 'packaging >= 17.0', 'setuptools'] + more_requires
+        ['colorama', 'packaging >= 17.0', 'pyyaml', 'setuptools'] +
+        more_requires
     ),
     extras_require={
         'dev': ['coverage', 'flake8 >= 3.7', 'lxml', 'mike >= 0.3.1',

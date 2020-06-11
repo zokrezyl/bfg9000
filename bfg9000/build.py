@@ -4,9 +4,11 @@ from itertools import chain
 from .arguments.parser import ArgumentParser
 from .builtins import builtin, init as builtin_init
 from .build_inputs import BuildInputs
-from .path import exists, Path, pushd, Root
 from .iterutils import listify
+from .path import exists, Path, pushd, Root
+from .shell import CalledProcessError, Mode
 from .tools import init as tools_init
+from .tools.mopack import make_mopack_options_yml
 
 bfgfile = 'build.bfg'
 optsfile = 'options.bfg'
@@ -48,13 +50,12 @@ def load_toolchain(env, path, reload=False):
     builtin_init()
     tools_init()
     if reload:
-        env.init_variables()
+        env.reload()
+    else:
+        env.toolchain.path = path
 
     context = builtin.ToolchainContext(env, reload)
     execute_file(context, path, run_post=True)
-
-    if not reload:
-        env.toolchain.path = path
 
 
 def _execute_options(env, parent=None, usage='parse'):
@@ -75,6 +76,23 @@ def _execute_options(env, parent=None, usage='parse'):
         if e.errno != errno.ENOENT:
             raise
         return parser, []
+
+
+def resolve_packages(env, toolchain=None):
+    mopack = [Path('mopack.yml', Root.srcdir)]
+    if exists(mopack[0], env.base_dirs):
+        try:
+            mopack.extend(listify(make_mopack_options_yml(env)))
+            env.tool('mopack').run(
+                'resolve', mopack, directory=env.builddir,
+                env=env.variables.initial, env_update=False, stdout=Mode.normal
+            )
+            return mopack
+        except CalledProcessError as e:
+            # A return code of 3 means this was a nested invocation of mopack.
+            if e.returncode != 3:
+                raise
+    return []
 
 
 def fill_user_help(env, parent):
